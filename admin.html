@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
+    <div id="lp" style="text-align:center; margin-top:100px;">
+        <h2>ADMIN LOGIN</h2>
+        <input type="password" id="pw" style="padding:10px;">
+        <button onclick="lg()">ENTER</button>
+    </div>
+    <div id="ap" style="display:none;">
+        <h1 style="color:#facc15">PENDING ORDERS</h1>
+        <div id="list"></div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+        function lg(){ if(document.getElementById('pw').value === "KAWSARahmed22@@") { document.getElementById('lp').style.display='none'; document.getElementById('ap').style.display='block'; start(); } }
+        function start(){
+            firebase.initializeApp({databaseURL: "https://the-10-million-pixels-plus-default-rtdb.firebaseio.com/"});
+            const db = firebase.database();
+            db.ref('pending').on('value', s => {
+                const list = document.getElementById('list'); list.innerHTML = "";
+                const data = s.val(); if(!data) return;
+                Object.keys(data).forEach(id => {
+                    list.innerHTML += `<div style="background:#111; padding:20px; border:1px solid #333; margin-bottom:10px;">
+                        <h3>${data[id].name} (#${data[id].plotID})</h3>
+                        <input type="text" id="img_${id}" placeholder="Logo Link">
+                        <input type="text" id="web_${id}" placeholder="Website Link"><br><br>
+                        <button onclick="ok('${id}')" style="background:green; color:#fff; padding:10px;">APPROVE</button>
+                    </div>`;
+                });
+            });
+        }
+        function ok(id){
+            const i = document.getElementById('img_'+id).value;
+            const w = document.getElementById('web_'+id).value;
+            firebase.database().ref('pending/'+id).once('value', s => {
+                let d = s.val(); d.imageUrl = i; d.link = w;
+                d.x = (d.plotID % 100) * 60; d.y = Math.floor(d.plotID / 100) * 40;
+                firebase.database().ref('pixels/'+id).set(d).then(() => firebase.database().ref('pending/'+id).remove());
+            });
+        }
+    </script>
+</body>
+</html>
